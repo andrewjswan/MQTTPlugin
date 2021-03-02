@@ -1,0 +1,2 @@
+# MQTTPlugin
+Mediaportal MQTT Plugin
