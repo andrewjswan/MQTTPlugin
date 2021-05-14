@@ -1,6 +1,8 @@
-﻿using MediaPortal.Video.Database;
+﻿using MediaPortal.GUI.Video;
+using MediaPortal.Video.Database;
 
 using System;
+using System.Collections;
 
 namespace MQTTPlugin
 {
@@ -34,5 +36,34 @@ namespace MQTTPlugin
 
       return item;
     }
+
+    public static void PlayMovie(string filename)
+    {
+      GUIVideoFiles.Reset(); // reset pincode
+
+      IMDBMovie movie = new IMDBMovie();
+      int id = VideoDatabase.GetMovieInfo(filename, ref movie);
+      if (id < 0)
+      {
+        return;
+      }
+
+      ArrayList files = new ArrayList();
+      VideoDatabase.GetFilesForMovie(movie.ID, ref files);
+
+      if (files.Count > 1)
+      {
+        GUIVideoFiles.StackedMovieFiles = files;
+        GUIVideoFiles.IsStacked = true;
+      }
+      else
+      {
+        GUIVideoFiles.IsStacked = false;
+      }
+
+      GUIVideoFiles.MovieDuration(files, false);
+      GUIVideoFiles.PlayMovie(movie.ID, false);
+    }
+
   }
 }

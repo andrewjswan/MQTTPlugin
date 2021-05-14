@@ -75,6 +75,9 @@
     <Reference Include="Dialogs">
       <HintPath>..\External\Dialogs.dll</HintPath>
     </Reference>
+    <Reference Include="GUIVideos">
+      <HintPath>..\External\GUIVideos.dll</HintPath>
+    </Reference>
     <Reference Include="LatestMediaHandler, Version=2.4.0.79, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\External\LatestMediaHandler.dll</HintPath>
@@ -112,7 +115,9 @@
     <Compile Include="DPAPI.cs" />
     <Compile Include="LatestsMediaHandlerHelper.cs" />
     <Compile Include="Messages.cs" />
+    <Compile Include="MyMusicHelper.cs" />
     <Compile Include="MyVideoHelper.cs" />
+    <Compile Include="Play.cs" />
     <Compile Include="Queue.cs" />
     <Compile Include="SkinInfo.cs" />
     <Compile Include="Utils.cs" />

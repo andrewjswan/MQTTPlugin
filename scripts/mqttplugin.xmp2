@@ -280,10 +280,11 @@ ajs</Value>
       <Revision>0</Revision>
     </Version>
     <ExtensionDescription> Publish some Mediaportal statuses to MQTTBroker</ExtensionDescription>
-    <VersionDescription>First version</VersionDescription>
+    <VersionDescription>Add Activate window command
+Add Play command (myvideo, mymusic)</VersionDescription>
     <DevelopmentStatus>Stable</DevelopmentStatus>
     <OnlineLocation>https://raw.githubusercontent.com/andrewjswan/MQTTPlugin/master/builds/MQTTPlugin-{VERSION}.MPE1</OnlineLocation>
-    <ReleaseDate>2021-03-02T15:04:24</ReleaseDate>
+    <ReleaseDate>2021-05-14T15:04:24</ReleaseDate>
     <Tags>mqtt</Tags>
     <Location>..\builds\MQTTPlugin-MAJOR.MINOR.BUILD.REVISION.MPE1</Location>
     <Params>

@@ -211,8 +211,8 @@ namespace MQTTPlugin
       if (mqttClient.IsConnected)
       {
         if (DebugMode) Logger.Debug("MQTT Broker connected: " + Host + ":" + Port);
-        mqttClient.Subscribe(new string[] { BaseTopic + "Command/button", BaseTopic + "Command/message", BaseTopic + "Command/window" }, 
-                             new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+        mqttClient.Subscribe(new string[] { BaseTopic + "Command/button", BaseTopic + "Command/message", BaseTopic + "Command/window", BaseTopic + "Command/play" }, 
+                             new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
       }
       else
       {
@@ -370,6 +370,8 @@ namespace MQTTPlugin
       }
       else if (ReceivedTopic.Contains("/message"))
       {
+        if (DebugMode) Logger.Debug("Message to received...");
+
         try
         {
           QueueRec rec = JsonConvert.DeserializeObject<QueueRec>(ReceivedMessage);
@@ -392,7 +394,31 @@ namespace MQTTPlugin
       else if (ReceivedTopic.Contains("/window"))
       {
         if (DebugMode) Logger.Debug("Activate Window Received: " + ReceivedMessage);
+
+        int id;
+        if (Int32.TryParse(ReceivedMessage, out id))
+        {
+          GUIMessage msg = new GUIMessage(GUIMessage.MessageType.GUI_MSG_GOTO_WINDOW, 0, 0, 0, id, 0, null);
+          GUIWindowManager.SendThreadMessage(msg);
+        }
       }
+      else if (ReceivedTopic.Contains("/play"))
+      {
+        if (DebugMode) Logger.Debug("Play Command Received...");
+
+        try
+        {
+          PlayItem rec = JsonConvert.DeserializeObject<PlayItem>(ReceivedMessage);
+
+          PlayHandler play = new PlayHandler();
+          play.Play(rec);
+        }
+        catch (WebException we)
+        {
+          Logger.Error("Client_MqttMsgPublishReceived: " + we);
+        }
+      }
+
     }
 
     #endregion
@@ -575,16 +601,17 @@ namespace MQTTPlugin
         if (Level == "Play")
         {
           playback.FileName = g_Player.Player.CurrentFile;
+          LatestMediaHandler.MQTTItem item;
 
           if (g_Player.IsMusic)
           {
-            Song song = new Song();
-            MusicDatabase musicDatabase = MusicDatabase.Instance;
-            musicDatabase.GetSongByFileName(playback.FileName, ref song);
-            if (song != null)
+            item = MyMusicHelper.CheckDB(playback.FileName);
+            if (!string.IsNullOrEmpty(item.Filename))
             {
-              playback.Genre = song.Genre;
-              playback.Title = song.Artist + " - " + song.Album + " - " + song.Title;
+              playback.Genre = item.Genres;
+              playback.Title = item.Title;
+              // playback.Poster = item.Poster;
+              // playback.Fanart = item.Fanart;
             }
           }
 
@@ -592,7 +619,6 @@ namespace MQTTPlugin
           {
             if (!playback.FileName.StartsWith("http://localhost/")) // Online Video is not in DB so skip DB Search
             {
-              LatestMediaHandler.MQTTItem item;
               try
               {
                 if (DebugMode) Logger.Debug("Check to see if the video is a mounted disc.");
