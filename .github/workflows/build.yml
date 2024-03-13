@@ -57,7 +57,7 @@ jobs:
 
   codeql:
     name: CodeQL
-    uses: andrewjswan/MPE/Actions/codeql.yml
+    uses: andrewjswan/MPE/Actions/codeql.yml@main
     needs: 
       - build
     permissions:
