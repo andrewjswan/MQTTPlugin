@@ -57,11 +57,12 @@ jobs:
 
   codeql:
     name: CodeQL
-    uses: andrewjswan/MPE/Actions/codeql.yml@main
+    uses: andrewjswan/MPE/.github/workflows/codeql.yml@main
     needs: 
       - build
     permissions:
       security-events: write
+    secrets: inherit
 
   mpe:
     name: MQTT Plugin / MPE
