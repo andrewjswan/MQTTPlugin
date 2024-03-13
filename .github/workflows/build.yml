@@ -57,7 +57,7 @@ jobs:
 
   codeql:
     name: CodeQL
-    uses: andrewjswan/MPE/.github/workflows/codeql.yml
+    uses: andrewjswan/MPE/.github/workflows/codeql.yml@master
     needs: 
       - build
     permissions:
