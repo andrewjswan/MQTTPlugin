@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PackageClass xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<PackageClass xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Version>2.0</Version>
   <Groups>
     <Items>
@@ -10,14 +10,14 @@
         <Description>MQTTPlugin</Description>
         <Files>
           <Items>
-            <FileItem InstallType="CopyFile" SystemFile="false" Modified="true">
+            <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
               <Param1 />
               <UpdateOption>OverwriteIfOlder</UpdateOption>
               <LocalFileName>..\MQTTPlugin\bin\Release\M2Mqtt.dll</LocalFileName>
               <ZipFileName>Installer{CopyFile}\{41ce8ff3-347b-4eb8-965d-ba2cf2ca6187}-M2Mqtt.dll</ZipFileName>
               <DestinationFilename>%Plugins%\process\M2Mqtt.dll</DestinationFilename>
             </FileItem>
-            <FileItem InstallType="CopyFile" SystemFile="false" Modified="true">
+            <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
               <Param1 />
               <UpdateOption>AlwaysOverwrite</UpdateOption>
               <LocalFileName>..\MQTTPlugin\bin\Release\MQTTPlugin.dll</LocalFileName>
@@ -34,7 +34,7 @@
         <Description>Config</Description>
         <Files>
           <Items>
-            <FileItem InstallType="CopyFile" SystemFile="false" Modified="true">
+            <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
               <Param1 />
               <UpdateOption>OverwriteIfOlder</UpdateOption>
               <LocalFileName>..\config\InputDeviceMappings\MQTTPlugin.xml</LocalFileName>
@@ -44,11 +44,28 @@
           </Items>
         </Files>
       </GroupItem>
+      <GroupItem Name="Libraries">
+        <ParentGroup />
+        <DisplayName>Libraries</DisplayName>
+        <DefaulChecked>true</DefaulChecked>
+        <Description>Libraries</Description>
+        <Files>
+          <Items>
+            <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
+              <Param1 />
+              <UpdateOption>NeverOverwrite</UpdateOption>
+              <LocalFileName>..\External\Newtonsoft.Json.dll</LocalFileName>
+              <ZipFileName>Installer{CopyFile}\{50f53661-d682-47cc-8271-d212a8aa3299}-Newtonsoft.Json.dll</ZipFileName>
+              <DestinationFilename>%Base%\Newtonsoft.Json.dll</DestinationFilename>
+            </FileItem>
+          </Items>
+        </Files>
+      </GroupItem>
     </Items>
   </Groups>
   <Sections>
     <Items>
-      <SectionItem Guid="b770d7d5-f63a-41d7-b6b8-0220a1775440" Name="Welcome Screen" ConditionGroup="">
+      <SectionItem Guid="b770d7d5-f63a-41d7-b6b8-0220a1775440" Name="Welcome Screen" ConditionGroup="" Condition="None">
         <Params>
           <Items>
             <SectionParam Name="Header text">
@@ -87,45 +104,7 @@ ajs</Value>
         <PanelName>Welcome Screen</PanelName>
         <WizardButtonsEnum>NextCancel</WizardButtonsEnum>
       </SectionItem>
-      <SectionItem Guid="7c466564-1819-4011-92ef-6dc2a449d8e5" Name="Tree View Selector" ConditionGroup="">
-        <Params>
-          <Items>
-            <SectionParam Name="Header Title">
-              <Value>Please select what files to install...</Value>
-              <ValueType>String</ValueType>
-              <Description>Header title</Description>
-            </SectionParam>
-            <SectionParam Name="Header description">
-              <Value />
-              <ValueType>String</ValueType>
-              <Description>Description of section, shown in under section title</Description>
-            </SectionParam>
-            <SectionParam Name="Header image">
-              <Value>..\MQTTPlugin\Resources\MQTTPlugin.png</Value>
-              <ValueType>File</ValueType>
-              <Description>Image in upper right part</Description>
-            </SectionParam>
-            <SectionParam Name="Description ">
-              <Value />
-              <ValueType>String</ValueType>
-              <Description>Description of this operation</Description>
-            </SectionParam>
-          </Items>
-        </Params>
-        <Actions>
-          <Items />
-        </Actions>
-        <IncludedGroups>
-          <string>Images</string>
-          <string>Skin images</string>
-          <string>Awards</string>
-          <string>Genres</string>
-          <string>Studios</string>
-        </IncludedGroups>
-        <PanelName>Tree View Selector</PanelName>
-        <WizardButtonsEnum>BackNextCancel</WizardButtonsEnum>
-      </SectionItem>
-      <SectionItem Guid="0188a113-f17c-430b-aa7d-5c26614eb2b5" Name="Install Section" ConditionGroup="">
+      <SectionItem Guid="0188a113-f17c-430b-aa7d-5c26614eb2b5" Name="Install Section" ConditionGroup="" Condition="None">
         <Params>
           <Items>
             <SectionParam Name="Header Title">
@@ -147,7 +126,7 @@ ajs</Value>
         </Params>
         <Actions>
           <Items>
-            <ActionItem Name="InstallFiles" ActionType="InstallFiles" ConditionGroup="">
+            <ActionItem Name="InstallFiles" ActionType="InstallFiles" ConditionGroup="" Condition="None">
               <Params>
                 <Items />
               </Params>
@@ -159,7 +138,7 @@ ajs</Value>
         <PanelName>Install Section</PanelName>
         <WizardButtonsEnum>Next</WizardButtonsEnum>
       </SectionItem>
-      <SectionItem Guid="40cda7e4-74e7-4326-aa2f-5634e5c1d081" Name="Setup Complete" ConditionGroup="">
+      <SectionItem Guid="40cda7e4-74e7-4326-aa2f-5634e5c1d081" Name="Setup Complete" ConditionGroup="" Condition="None">
         <Params>
           <Items>
             <SectionParam Name="Header text">
@@ -194,20 +173,21 @@ ajs</Value>
         <Type>MediaPortal</Type>
         <Id />
         <MinVersion>
-          <Major>1</Major>
-          <Minor>1</Minor>
-          <Build>6</Build>
-          <Revision>27644</Revision>
+          <Major>*</Major>
+          <Minor>*</Minor>
+          <Build>*</Build>
+          <Revision>*</Revision>
         </MinVersion>
         <MaxVersion>
-          <Major>1</Major>
-          <Minor>1</Minor>
-          <Build>6</Build>
-          <Revision>27644</Revision>
+          <Major>*</Major>
+          <Minor>*</Minor>
+          <Build>*</Build>
+          <Revision>*</Revision>
         </MaxVersion>
         <WarnOnly>false</WarnOnly>
-        <Message>This version of MQTT Plugin requires MediaPortal 1.25 Pre</Message>
+        <Message />
         <Name>MediaPortal</Name>
+        <Condition>None</Condition>
       </DependencyItem>
       <DependencyItem>
         <Type>Skin</Type>
@@ -227,6 +207,7 @@ ajs</Value>
         <WarnOnly>true</WarnOnly>
         <Message>Requires Skin version 1.4.0.0 to 1.4.0.0.</Message>
         <Name>Skin</Name>
+        <Condition>None</Condition>
       </DependencyItem>
       <DependencyItem>
         <Type>Installer</Type>
@@ -246,6 +227,7 @@ ajs</Value>
         <WarnOnly>false</WarnOnly>
         <Message>This version of MQTT Plugin requires MediaPortal 1.25 Pre</Message>
         <Name>Installer</Name>
+        <Condition>None</Condition>
       </DependencyItem>
     </Items>
   </Dependencies>
@@ -280,11 +262,14 @@ ajs</Value>
       <Revision>0</Revision>
     </Version>
     <ExtensionDescription> Publish some Mediaportal statuses to MQTTBroker</ExtensionDescription>
-    <VersionDescription>First version</VersionDescription>
+    <VersionDescription>Rebuild to support x86 and x64 architectures.
+Support for Newtonsoft.Json.13.0.3
+Fix for MP 1.33 x64</VersionDescription>
     <DevelopmentStatus>Stable</DevelopmentStatus>
     <OnlineLocation>https://raw.githubusercontent.com/andrewjswan/MQTTPlugin/master/builds/MQTTPlugin-{VERSION}.MPE1</OnlineLocation>
-    <ReleaseDate>2021-03-02T15:04:24</ReleaseDate>
+    <ReleaseDate>2024-03-02T15:04:24</ReleaseDate>
     <Tags>mqtt</Tags>
+    <PlatformCompatibility>AnyCPU</PlatformCompatibility>
     <Location>..\builds\MQTTPlugin-MAJOR.MINOR.BUILD.REVISION.MPE1</Location>
     <Params>
       <Items>
@@ -320,32 +305,39 @@ ajs</Value>
   </GeneralInfo>
   <UniqueFileList>
     <Items>
-      <FileItem InstallType="CopyFile" SystemFile="false" Modified="true">
+      <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
         <Param1 />
         <UpdateOption>OverwriteIfOlder</UpdateOption>
         <LocalFileName>..\MQTTPlugin\bin\Release\M2Mqtt.dll</LocalFileName>
         <ZipFileName>Installer{CopyFile}\{41ce8ff3-347b-4eb8-965d-ba2cf2ca6187}-M2Mqtt.dll</ZipFileName>
         <DestinationFilename>%Plugins%\process\M2Mqtt.dll</DestinationFilename>
       </FileItem>
-      <FileItem InstallType="CopyFile" SystemFile="false" Modified="true">
+      <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
         <Param1 />
         <UpdateOption>AlwaysOverwrite</UpdateOption>
         <LocalFileName>..\MQTTPlugin\bin\Release\MQTTPlugin.dll</LocalFileName>
         <ZipFileName>Installer{CopyFile}\{5642ead1-3726-416d-b331-63520766fb8c}-MQTTPlugin.dll</ZipFileName>
         <DestinationFilename>%Plugins%\process\MQTTPlugin.dll</DestinationFilename>
       </FileItem>
-      <FileItem InstallType="CopyFile" SystemFile="false" Modified="true">
+      <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
         <Param1 />
         <UpdateOption>OverwriteIfOlder</UpdateOption>
         <LocalFileName>..\config\InputDeviceMappings\MQTTPlugin.xml</LocalFileName>
         <ZipFileName>Installer{CopyFile}\{23730237-4ca0-4e18-9c64-90ac472bde68}-MQTTPlugin.xml</ZipFileName>
         <DestinationFilename>%Config%\InputDeviceMappings\MQTTPlugin.xml</DestinationFilename>
       </FileItem>
-      <FileItem InstallType="CopyFile" SystemFile="true" Modified="true">
+      <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
+        <Param1 />
+        <UpdateOption>NeverOverwrite</UpdateOption>
+        <LocalFileName>..\External\Newtonsoft.Json.dll</LocalFileName>
+        <ZipFileName>Installer{CopyFile}\{50f53661-d682-47cc-8271-d212a8aa3299}-Newtonsoft.Json.dll</ZipFileName>
+        <DestinationFilename>%Base%\Newtonsoft.Json.dll</DestinationFilename>
+      </FileItem>
+      <FileItem InstallType="CopyFile" SystemFile="true" Modified="true" Condition="None">
         <Param1 />
         <UpdateOption>OverwriteIfOlder</UpdateOption>
         <LocalFileName>..\MQTTPlugin\Resources\MQTTPlugin.png</LocalFileName>
-        <ZipFileName>Installer{CopyFile}\{888587fd-e475-431a-8f7a-bb3618086afd}-MQTTPlugin.png</ZipFileName>
+        <ZipFileName>Installer{CopyFile}\{c44dc14a-54c7-430b-ab7d-664edbaa7f50}-MQTTPlugin.png</ZipFileName>
         <DestinationFilename />
       </FileItem>
     </Items>

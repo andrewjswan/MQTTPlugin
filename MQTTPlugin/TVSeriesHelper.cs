@@ -29,6 +29,9 @@ namespace MQTTPlugin
             item.Title = s.ToString() + " - " + episodes[0][DBEpisode.cEpisodeName];
             item.Filename = SearchFile;
             item.Genres = s[DBOnlineSeries.cGenre];
+            item.Episode = "S" + episodes[0][DBEpisode.cSeasonIndex] + "E" + episodes[0][DBEpisode.cEpisodeIndex];
+            item.Poster= ImageAllocator.GetSeriesPosterAsFilename(s);
+            item.Fanart = Fanart.getFanart(episodes[0][DBEpisode.cSeriesID]).FanartFilename;
             item.GetArtwork("tv");
           }
         }

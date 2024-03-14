@@ -20,6 +20,7 @@ namespace MQTTPlugin
     internal static Hashtable ImageCache;
 
     public static string Language;
+    public static string[] PipesArray = new string[1] { "|" };
 
     internal static bool IsAssemblyAvailable(string name, Version ver)
     {
@@ -173,7 +174,7 @@ namespace MQTTPlugin
       }
       catch (WebException we)
       {
-        Logger.Error("DownloadJson: " + we);
+        Logger.Debug("DownloadJson: " + we);
       }
       return string.Empty;
     }

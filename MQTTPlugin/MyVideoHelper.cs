@@ -1,6 +1,9 @@
-﻿using MediaPortal.Video.Database;
+﻿using MediaPortal.GUI.Video;
+using MediaPortal.Util;
+using MediaPortal.Video.Database;
 
 using System;
+using System.Collections;
 
 namespace MQTTPlugin
 {
@@ -24,6 +27,8 @@ namespace MQTTPlugin
           item.Title = movie.Title + " (" + movie.Year + ")";
           item.Filename = SearchFile;
           item.Genres = movie.Genre;
+          item.Poster = FanartHandlerHelper.GetFanartTVForLatestMedia(movie.Title, movie.ID.ToString(), null, FanartHandlerHelper.FanartTV.MoviesPoster);
+          item.Fanart = FanartHandlerHelper.GetFanartTVForLatestMedia(movie.Title, movie.ID.ToString(), null, FanartHandlerHelper.FanartTV.MoviesBackground);
           item.GetArtwork("movie");
         }
       }
@@ -34,5 +39,34 @@ namespace MQTTPlugin
 
       return item;
     }
+
+    public static void PlayMovie(string filename)
+    {
+      GUIVideoFiles.Reset(); // reset pincode
+
+      IMDBMovie movie = new IMDBMovie();
+      int id = VideoDatabase.GetMovieInfo(filename, ref movie);
+      if (id < 0)
+      {
+        return;
+      }
+
+      ArrayList files = new ArrayList();
+      VideoDatabase.GetFilesForMovie(movie.ID, ref files);
+
+      if (files.Count > 1)
+      {
+        GUIVideoFiles.StackedMovieFiles = files;
+        GUIVideoFiles.IsStacked = true;
+      }
+      else
+      {
+        GUIVideoFiles.IsStacked = false;
+      }
+
+      GUIVideoFiles.MovieDuration(files, false);
+      GUIVideoFiles.PlayMovie(movie.ID, false);
+    }
+
   }
 }

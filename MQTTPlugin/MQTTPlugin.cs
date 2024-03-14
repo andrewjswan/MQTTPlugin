@@ -11,16 +11,14 @@ using System.Windows.Forms;
 using MediaPortal.Configuration;
 using MediaPortal.GUI.Library;
 using MediaPortal.InputDevices;
-using MediaPortal.Music.Database;
 using MediaPortal.Player;
 using MediaPortal.Profile;
-using MediaPortal.Video.Database;
-
+using Microsoft.Win32;
 using Newtonsoft.Json;
 
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
-
+using Action = MediaPortal.GUI.Library.Action;
 using Timer = System.Threading.Timer;
 
 namespace MQTTPlugin
@@ -62,6 +60,9 @@ namespace MQTTPlugin
     private bool _threadProcessStop = false;
     private ushort PublishedId = 0;
     private Timer KeepAliveTimer;
+    private bool IsReconected = false;
+
+    private string CurrentMediaType = string.Empty;
 
     #region IPluginReceiver Members
 
@@ -128,7 +129,7 @@ namespace MQTTPlugin
 
         DebugMode = xmlReader.GetValueAsBool(PLUGIN_NAME, "DebugMode", false);
       }
-      HostName = Dns.GetHostName();
+      HostName = Dns.GetHostName().ToUpperInvariant().Replace(" ", "-");
       BaseTopic = "Mediaportal/" + HostName + "/";
       Utils.Language = Utils.GetLang().ToLowerInvariant();
       DialogBusy = false;
@@ -196,35 +197,27 @@ namespace MQTTPlugin
       mqttClient.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;
       mqttClient.MqttMsgPublished += Client_MqttMsgPublished;
 
-      string clientId = "MP-" + HostName.Replace(" ", "-");
-      if (string.IsNullOrEmpty(User))
-      {
-        // mqttClient.Connect(clientId);
-        mqttClient.Connect(clientId, null, null, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, true, BaseTopic + "status", "Offline", true, 60);
-      }
-      else
-      {
-        // mqttClient.Connect(clientId, User, Password);
-        mqttClient.Connect(clientId, User, Password, false, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, true, BaseTopic + "status", "Offline", true, 60);
-      }
+      MQTTReconnect();
 
       if (mqttClient.IsConnected)
       {
         if (DebugMode) Logger.Debug("MQTT Broker connected: " + Host + ":" + Port);
-        mqttClient.Subscribe(new string[] { BaseTopic + "Command/button", BaseTopic + "Command/message", BaseTopic + "Command/window" }, 
-                             new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+        mqttClient.Subscribe(new string[] { BaseTopic + "Command/button", BaseTopic + "Command/message", BaseTopic + "Command/window", BaseTopic + "Command/play" }, 
+                             new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
       }
       else
       {
         if (DebugMode) Logger.Debug("MQTT Broker connect to " + Host + ":" + Port + " failed.");
       }
 
-      g_Player.PlayBackStarted += new g_Player.StartedHandler(OnVideoStarted);
-      g_Player.PlayBackEnded += new g_Player.EndedHandler(OnVideoEnded);
-      g_Player.PlayBackStopped += new g_Player.StoppedHandler(OnVideoStopped);
+      g_Player.PlayBackStarted += new g_Player.StartedHandler(OnPlayBackStarted);
+      g_Player.PlayBackChanged += new g_Player.ChangedHandler(OnPlayBackChanged);
+      g_Player.PlayBackEnded += new g_Player.EndedHandler(OnPlayBackEnded);
+      g_Player.PlayBackStopped += new g_Player.StoppedHandler(OnPlayBackStopped);
 
       GUIWindowManager.OnNewAction += new OnActionHandler(GUIWindowManager_OnNewAction);
       GUIWindowManager.OnActivateWindow += new GUIWindowManager.WindowActivationHandler(GUIWindowManager_OnActivateWindow);
+      GUIWindowManager.Receivers += new SendMessageHandler(GUIWindowManager_OnNewMessage);
 
       GUIPropertyManager.OnPropertyChanged += new GUIPropertyManager.OnPropertyChangedHandler(GUIPropertyManager_OnPropertyChanged);
 
@@ -238,26 +231,70 @@ namespace MQTTPlugin
       _threadSendMessages = new Thread(ThreadSendMessages);
       _threadSendMessages.Priority = ThreadPriority.Lowest;
       _threadSendMessages.IsBackground = true;
-      _threadSendMessages.Name = "GUIPictures GetPicturesInfo";
+      _threadSendMessages.Name = "MQTTPlugin SendMessage";
       _threadSendMessages.Start();
+
+      SystemEvents.PowerModeChanged += OnPowerChange;
 
       SendEvent("status", "Online");
       SendEvent("version", FileVersionInfo.GetVersionInfo(Application.ExecutablePath).ProductVersion);
       // SendEvent("Version", FileVersionInfo.GetVersionInfo(Application.ExecutablePath).FileVersion);
 
-      SendEvent("holiday");
+      SendEvent("holiday", "");
       GUIWindowManager_OnActivateWindow(GUIWindowManager.ActiveWindow);
+      UpdateVolumeProperties();
 
       Logger.Info("Started");
 
       KeepAliveTimer = new Timer( new TimerCallback(KeepAliveEvent), null, 60000, 60000);
     }
 
+    public void MQTTReconnect()
+    {
+      if (mqttClient == null)
+      {
+        return;
+      }
+
+      if (mqttClient.IsConnected)
+      {
+        return;
+      }
+
+      if (IsReconected)
+      {
+        return;
+      }
+      IsReconected = true;
+
+      try
+      {
+#if DEBUG
+        string clientId = "MP-DEBUG-" + HostName;
+#else
+        string clientId = "MP-" + HostName;
+#endif
+        if (string.IsNullOrEmpty(User))
+        {
+          mqttClient.Connect(clientId, null, null, true, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, true, BaseTopic + "status", "Offline", true, 60);
+        }
+        else
+        {
+          mqttClient.Connect(clientId, User, Password, true, MqttMsgConnect.QOS_LEVEL_AT_MOST_ONCE, true, BaseTopic + "status", "Offline", true, 60);
+        }
+      }
+      catch { };
+      IsReconected = false;
+    }
+
     void IPlugin.Stop()
     {
+      SystemEvents.PowerModeChanged -= OnPowerChange;
+
       KeepAliveTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
       SendEvent("status", "Offline");
+      Thread.Sleep(1000);
 
       if (_threadSendMessages != null && _threadSendMessages.IsAlive)
       {
@@ -281,6 +318,22 @@ namespace MQTTPlugin
     }
 
     #endregion
+
+    private void OnPowerChange(object s, PowerModeChangedEventArgs e)
+    {
+      switch (e.Mode)
+      {
+        case PowerModes.Resume:
+          KeepAliveTimer.Change(60000, 60000);
+          break;
+        case PowerModes.Suspend:
+          KeepAliveTimer.Change(Timeout.Infinite, Timeout.Infinite);
+          SendEvent("status", "Offline");
+          Thread.Sleep(1000);
+          _queueSendEvent.Set();
+          break;
+      }
+    }
 
     #region Timers
 
@@ -306,6 +359,11 @@ namespace MQTTPlugin
             if (message.IsEmpty)
             {
               continue;
+            }
+
+            if (mqttClient == null || !mqttClient.IsConnected)
+            {
+              break;
             }
 
             ushort id = mqttClient.Publish(message.Topic, Encoding.UTF8.GetBytes(message.Message), message.QoS, message.Retain);
@@ -370,6 +428,8 @@ namespace MQTTPlugin
       }
       else if (ReceivedTopic.Contains("/message"))
       {
+        if (DebugMode) Logger.Debug("Message to received...");
+
         try
         {
           QueueRec rec = JsonConvert.DeserializeObject<QueueRec>(ReceivedMessage);
@@ -392,50 +452,101 @@ namespace MQTTPlugin
       else if (ReceivedTopic.Contains("/window"))
       {
         if (DebugMode) Logger.Debug("Activate Window Received: " + ReceivedMessage);
+
+        int id;
+        if (Int32.TryParse(ReceivedMessage, out id))
+        {
+          GUIMessage msg = new GUIMessage(GUIMessage.MessageType.GUI_MSG_GOTO_WINDOW, 0, 0, 0, id, 0, null);
+          GUIWindowManager.SendThreadMessage(msg);
+        }
       }
+      else if (ReceivedTopic.Contains("/play"))
+      {
+        if (DebugMode) Logger.Debug("Play Command Received...");
+
+        try
+        {
+          PlayItem rec = JsonConvert.DeserializeObject<PlayItem>(ReceivedMessage);
+
+          PlayHandler play = new PlayHandler();
+          play.Play(rec);
+        }
+        catch (WebException we)
+        {
+          Logger.Error("Client_MqttMsgPublishReceived: " + we);
+        }
+      }
+
     }
 
     #endregion
 
     #region On events
-    public void OnVideoStarted(g_Player.MediaType type, string s)
+
+    public void OnPlayBackStarted(g_Player.MediaType type, string s)
     {
       if (DebugMode) Logger.Debug("Action is Play");
-      SetLevelForPlayback(type.ToString(), "Play");
+      SetLevelForPlayback(GetCurrentMediaType(type.ToString()), "Play");
+      UpdateVolumeProperties();
     }
 
-    public void OnVideoEnded(g_Player.MediaType type, string s)
+
+    public void OnPlayBackEnded(g_Player.MediaType type, string s)
     {
       if (DebugMode) Logger.Debug("Action is End");
-      SetLevelForPlayback(type.ToString(), "End");
+      SetLevelForPlayback(CurrentMediaType, "End");
     }
 
-    public void OnVideoStopped(g_Player.MediaType type, int i, string s)
+    private void OnPlayBackChanged(g_Player.MediaType type, int stoptime, string filename)
+    {
+      // if (DebugMode) Logger.Debug("Action is Play Back Changed");
+      // if (g_Player.Playing)
+      // {
+      //   SetLevelForPlayback(GetCurrentMediaType(type.ToString()), "Play");
+      // }
+    }
+
+    public void OnPlayBackStopped(g_Player.MediaType type, int i, string s)
     {
       if (DebugMode) Logger.Debug("Action is Stop");
-      SetLevelForPlayback(GetCurrentMediaType(), "Stop");
+      SetLevelForPlayback(CurrentMediaType, "Stop");
     }
 
     void GUIWindowManager_OnNewAction(MediaPortal.GUI.Library.Action action)
     {
-      if (action.wID == MediaPortal.GUI.Library.Action.ActionType.ACTION_PAUSE)
+      if (action.wID == Action.ActionType.ACTION_PAUSE)
       {
         if (DebugMode) Logger.Debug("Action is Pause, detecting if playing or paused");
         if (g_Player.Paused)
         {
           if (DebugMode) Logger.Debug("Action is Pause");
-          SetLevelForPlayback(GetCurrentMediaType(), "Pause");
+          SetLevelForPlayback(CurrentMediaType, "Pause");
         }
         else if (g_Player.Playing)
         {
           if (DebugMode) Logger.Debug("Action is Resume");
-          if (g_Player.Playing) SetLevelForPlayback(GetCurrentMediaType(), "Play");
+          SetLevelForPlayback(CurrentMediaType, "Play");
         }
       }
-      else if (action.wID == MediaPortal.GUI.Library.Action.ActionType.ACTION_PLAY || action.wID == MediaPortal.GUI.Library.Action.ActionType.ACTION_MUSIC_PLAY)
+      else if (action.wID == Action.ActionType.ACTION_PLAY || action.wID == Action.ActionType.ACTION_MUSIC_PLAY)
       {
         if (DebugMode) Logger.Debug("Action is Play");
-        SetLevelForPlayback(GetCurrentMediaType(), "Play");
+        SetLevelForPlayback(GetCurrentMediaType("Video"), "Play");
+      }
+
+      switch (action.wID)
+      {
+        // mute or unmute audio
+        case Action.ActionType.ACTION_VOLUME_MUTE:
+          UpdateVolumeProperties();
+          break;
+
+        // decrease volume 
+        case Action.ActionType.ACTION_VOLUME_DOWN:
+        // increase volume 
+        case Action.ActionType.ACTION_VOLUME_UP:
+          UpdateVolumeProperties();
+          break;
       }
     }
 
@@ -468,6 +579,56 @@ namespace MQTTPlugin
       {
         SendEvent("holiday", tagValue);
       }
+
+      // Playing
+      if (tag.Equals("#currentplaytime") || tag.Equals("#currentremaining") || tag.Equals("#duration"))
+      {
+        UpdatePlayingProperties();
+      }
+
+      // Volume
+      if (tag.Equals("#volume.percent") || tag.Equals("#volume.mute"))
+      {
+        UpdateVolumeProperties();
+      }
+    }
+
+    private void UpdatePlayingProperties()
+    {
+      if (g_Player.Playing || g_Player.Paused)
+      {
+        SendEvent("Player/playtime", ((int)g_Player.CurrentPosition).ToString());
+        SendEvent("Player/remainingtime", ((int)(g_Player.Duration - g_Player.CurrentPosition)).ToString());
+        SendEvent("Player/totaltime", ((int)g_Player.Duration).ToString());
+      }
+      else
+      {
+        SendEvent("Player/playtime", "");
+        SendEvent("Player/remainingtime", "");
+        SendEvent("Player/totaltime", "");
+      }
+    }
+
+    private void UpdateVolumeProperties()
+    {
+      float fRange = (float)(VolumeHandler.Instance.Maximum - VolumeHandler.Instance.Minimum);
+      float fPos = (float)(VolumeHandler.Instance.Volume - VolumeHandler.Instance.Minimum);
+      float fPercent = (fPos / fRange) * 100.0f;
+      SendEvent("volume", ((int)Math.Round(fPercent)).ToString());
+      SendEvent("volume/mute", VolumeHandler.Instance.IsMuted ? "true" : "false");
+    }
+
+    private void GUIWindowManager_OnNewMessage(GUIMessage message)
+    {
+      if (message.Message == GUIMessage.MessageType.GUI_MSG_PLAYER_POSITION_CHANGED)
+      {
+        if (g_Player.Playing)
+        {
+          if (DebugMode) Logger.Debug("Action is Position Changes");
+          SetLevelForPlayback(CurrentMediaType, "Play");
+        }
+
+      }
     }
 
     private class ActiveWindow
@@ -488,6 +649,28 @@ namespace MQTTPlugin
         if (DebugMode) Logger.Debug("Window name: " + window.Name);
 
         SendEvent("Window", "Activate:" + JsonConvert.SerializeObject(window, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new Utils.LowercaseContractResolver() }));
+        SendSourceName(windowID);
+      }
+    }
+
+    private void SendSourceName(int id)
+    {
+      SendEvent("input/list", "[\"Video\", \"Series\", \"Music\", \"Pictures\", \"Other\"]");
+
+      switch (id)
+      {
+        case (int)MediaPortal.GUI.Library.GUIWindow.Window.WINDOW_VIDEOS:
+          SendEvent("input", "Video");
+          break;
+        case (int)MediaPortal.GUI.Library.GUIWindow.Window.WINDOW_MUSIC:
+          SendEvent("input", "Music");
+          break;
+        case (int)MediaPortal.GUI.Library.GUIWindow.Window.WINDOW_PICTURES:
+          SendEvent("input", "Pictures");
+          break;
+        case 9811: // TV-Series
+          SendEvent("input", "Series");
+          break;
       }
     }
 
@@ -502,36 +685,43 @@ namespace MQTTPlugin
       public string Genre { get; set; }
       public string Poster { get; set; }
       public string Fanart { get; set; }
-      public string LengthString { get; set; }
+      public string Length { get; set; }
     }
 
-    private string GetCurrentMediaType()
+    private string GetCurrentMediaType(string type)
     {
       if (g_Player.IsMusic)
       {
         if (DebugMode) Logger.Debug("Media is Music");
-        return "Music";
+        CurrentMediaType = "Music";
       }
       else if (g_Player.IsRadio)
       {
         if (DebugMode) Logger.Debug("Media is Radio");
-        return "Radio";
+        CurrentMediaType = "Radio";
       }
       else if (g_Player.IsTVRecording)
       {
         if (DebugMode) Logger.Debug("Media is Recording");
-        return "Recording";
+        CurrentMediaType = "Recording";
+      }
+      else if (g_Player.IsPicture)
+      {
+        if (DebugMode)
+          Logger.Debug("Media is Picture");
+        CurrentMediaType = "Picture";
       }
       else if (g_Player.IsTV)
       {
         if (DebugMode) Logger.Debug("Media is TV");
-        return "TV";
+        CurrentMediaType = "TV";
       }
       else
       {
         if (DebugMode) Logger.Debug("Media is Video");
-        return "Video";
+        CurrentMediaType = type;
       }
+      return CurrentMediaType;
     }
 
     private void SetLevelForPlayback(string mediaType, string Level)
@@ -544,7 +734,7 @@ namespace MQTTPlugin
       Playback playback = new Playback()
       {
         Title = string.Empty,
-        LengthString = string.Empty,
+        Length = string.Empty,
         Genre = string.Empty,
         FileName = string.Empty,
         Poster = string.Empty,
@@ -556,35 +746,36 @@ namespace MQTTPlugin
         if (g_Player.IsDVD)
         {
           if (DebugMode) Logger.Debug("Length is Long (Media is DVD)");
-          playback.LengthString = "Long";
+          playback.Length = "Long";
         }
         else if ((mediaType == g_Player.MediaType.Video.ToString()) || mediaType == g_Player.MediaType.Recording.ToString())
         {
           if (g_Player.Duration < (setLevelForMediaDuration * 60))
           {
             if (DebugMode) Logger.Debug("Length is Short");
-            playback.LengthString = "Short";
+            playback.Length = "Short";
           }
           else
           {
             if (DebugMode) Logger.Debug("Length is Long");
-            playback.LengthString = "Long";
+            playback.Length = "Long";
           }
         }
 
         if (Level == "Play")
         {
           playback.FileName = g_Player.Player.CurrentFile;
+          LatestMediaHandler.MQTTItem item = new LatestMediaHandler.MQTTItem();
 
           if (g_Player.IsMusic)
           {
-            Song song = new Song();
-            MusicDatabase musicDatabase = MusicDatabase.Instance;
-            musicDatabase.GetSongByFileName(playback.FileName, ref song);
-            if (song != null)
+            item = MyMusicHelper.CheckDB(playback.FileName);
+            if (!string.IsNullOrEmpty(item.Filename))
             {
-              playback.Genre = song.Genre;
-              playback.Title = song.Artist + " - " + song.Album + " - " + song.Title;
+              playback.Genre = item.Genres;
+              playback.Title = item.Title;
+              // playback.Poster = item.Poster;
+              // playback.Fanart = item.Fanart;
             }
           }
 
@@ -592,7 +783,6 @@ namespace MQTTPlugin
           {
             if (!playback.FileName.StartsWith("http://localhost/")) // Online Video is not in DB so skip DB Search
             {
-              LatestMediaHandler.MQTTItem item;
               try
               {
                 if (DebugMode) Logger.Debug("Check to see if the video is a mounted disc.");
@@ -603,54 +793,59 @@ namespace MQTTPlugin
               }
               catch
               {
-                Logger.Warning("Daemontools not installed/configured");
+                Logger.Warning("DaemonTools not Installed/Configured");
               }
 
-              item = MyVideoHelper.CheckDB(playback.FileName);
+              // TV Series
+              try
+              {
+                item = TVSeriesHelper.CheckDB(playback.FileName);
+                if (!string.IsNullOrEmpty(item.Filename))
+                {
+                  CurrentMediaType = "Series";
+                  mediaType = CurrentMediaType;
+                }
+              }
+              catch { }
+              if (string.IsNullOrEmpty(item.Filename))
+              {
+                if (DebugMode) Logger.Debug("Video is not in TVSeries database.");
+              }
+
+              // MyVideo
+              if (string.IsNullOrEmpty(item.Filename))
+              {
+                try
+                {
+                  item = MyVideoHelper.CheckDB(playback.FileName);
+                }
+                catch { }
+              }
+              if (string.IsNullOrEmpty(item.Filename))
+              {
+                if (DebugMode) Logger.Debug("Video is not in MyVideos database.");
+              }
+
+              // Moving Pictures
+              if (string.IsNullOrEmpty(item.Filename))
+              {
+                try
+                {
+                  item = MovingPicturesHelper.CheckDB(playback.FileName);
+                }
+                catch { }
+                if (string.IsNullOrEmpty(item.Filename))
+                {
+                  if (DebugMode) Logger.Debug("Video is not in Moving Pictures database.");
+                }
+              }
+
               if (!string.IsNullOrEmpty(item.Filename))
               {
                 playback.Genre = item.Genres;
                 playback.Title = item.Title;
                 playback.Poster = item.Poster;
                 playback.Fanart = item.Fanart;
-              }
-              else // Movie not in MyVideo's DB
-              {
-                if (DebugMode) Logger.Debug("Video is not in MyVideos database.");
-                try
-                {
-                  item = TVSeriesHelper.CheckDB(playback.FileName);
-                  if (!string.IsNullOrEmpty(item.Filename))
-                  {
-                    playback.Genre = item.Genres;
-                    playback.Title = item.Title;
-                    playback.Poster = item.Poster;
-                    playback.Fanart = item.Fanart;
-                  }
-                }
-                catch
-                {
-                  Logger.Warning("Error while searching TVSeries Database, probaly not installed");
-                }
-
-                if (string.IsNullOrEmpty(item.Filename))
-                {
-                  try
-                  {
-                    item = MovingPicturesHelper.CheckDB(playback.FileName);
-                    if (!string.IsNullOrEmpty(item.Filename))
-                    {
-                      playback.Genre = item.Genres;
-                      playback.Title = item.Title;
-                      playback.Poster = item.Poster;
-                      playback.Fanart = item.Fanart;
-                    }
-                  }
-                  catch
-                  {
-                    Logger.Warning("Error while searching MovingPictures Database, probaly not installed");
-                  }
-                }
               }
             }
             else
@@ -660,7 +855,7 @@ namespace MQTTPlugin
           }
         }
 
-        SendEvent("Player", new string[] { "type:" + mediaType, "state:" + Level });
+        SendEvent("Player", new string[] { "type:" + mediaType, "state:" + Level.Replace("End", "Stop") });
       }
 
       playback.Genre = !string.IsNullOrEmpty(playback.Genre) ? playback.Genre.Trim('|').Replace("|", " / ") : "";
@@ -679,9 +874,9 @@ namespace MQTTPlugin
         {
           Logger.Debug("Genre: " + playback.Genre);
         }
-        if (!string.IsNullOrEmpty(playback.LengthString))
+        if (!string.IsNullOrEmpty(playback.Length))
         {
-          Logger.Debug("Length: " + playback.LengthString);
+          Logger.Debug("Length: " + playback.Length);
         }
       }
 
@@ -694,6 +889,7 @@ namespace MQTTPlugin
       {
         SendEvent("Player/" + mediaType, "action:" + Level);
       }
+      UpdatePlayingProperties();
 
       previousLevel = Level;
       previousMediaType = mediaType;
@@ -717,6 +913,21 @@ namespace MQTTPlugin
     {
       if (!SystemStandby)
       {
+        if (_threadProcessStop)
+        {
+          return;
+        }
+
+        if (mqttClient == null)
+        {
+          return;
+        }
+
+        if (!mqttClient.IsConnected)
+        {
+          MQTTReconnect();
+        }
+
         if (mqttClient.IsConnected)
         {
           Event = BaseTopic + Event;
@@ -730,7 +941,8 @@ namespace MQTTPlugin
                 string message = s;
                 string topic = Event;
                 int index = s.IndexOf(":");
-                if (index > 0)
+                int jsonindex = s.IndexOf("{");
+                if (index > 0 && (jsonindex == -1 || jsonindex > index))
                 {
                   topic = topic + "/" + s.Substring(0, index);
                   message = s.Substring(index + 1);

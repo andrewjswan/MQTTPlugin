@@ -1,0 +1,15 @@
+# Build output
+[Bb]in
+[Oo]bj
+[Dd]ebug
+[Rr]elease
+[Pp]ackages
+
+# Visual Studio
+.vs
+
+# User specific files
+*.suo
+*.user
+*.log
+*.bak

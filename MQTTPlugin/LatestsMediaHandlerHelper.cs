@@ -102,14 +102,16 @@ namespace MQTTPlugin
             JsonRoot images = JsonConvert.DeserializeObject<JsonRoot>(json);
 
             // Poster
-            string image = images.posters.Where(l => l.iso_639_1 == Utils.Language).OrderByDescending(x => x.vote_average).ThenByDescending(y => y.width).FirstOrDefault().file_path ?? string.Empty;
+            var poster = images.posters.Where(l => l.iso_639_1 == Utils.Language).OrderByDescending(x => x.vote_average).ThenByDescending(y => y.width).FirstOrDefault();
+            string image = poster == null ? string.Empty : poster.file_path;
             if (!string.IsNullOrEmpty(image))
             {
               self.Poster = ApiImageTheMovieDB + image;
             }
             else if (Utils.Language != "en")
             {
-              image = images.posters.Where(l => l.iso_639_1 == "en").OrderByDescending(x => x.vote_average).ThenByDescending(y => y.width).FirstOrDefault().file_path ?? string.Empty;
+              poster = images.posters.Where(l => l.iso_639_1 == "en").OrderByDescending(x => x.vote_average).ThenByDescending(y => y.width).FirstOrDefault();
+              image = poster == null ? string.Empty : poster.file_path;
               if (!string.IsNullOrEmpty(image))
               {
                 self.Poster = ApiImageTheMovieDB + image;
@@ -117,24 +119,17 @@ namespace MQTTPlugin
             }
 
             // Background
-            image = images.backdrops.Where(l => l.iso_639_1 == Utils.Language).OrderByDescending(x => x.vote_average).ThenByDescending(y => y.width).FirstOrDefault().file_path ?? string.Empty;
+            var background = images.backdrops.OrderByDescending(x => x.vote_average).ThenByDescending(y => y.width).FirstOrDefault();
+            image = background == null ? string.Empty : background.file_path;
             if (!string.IsNullOrEmpty(image))
             {
               self.Fanart = ApiImageTheMovieDB + image;
-            }
-            else if (Utils.Language != "en")
-            {
-              image = images.backdrops.Where(l => l.iso_639_1 == "en").OrderByDescending(x => x.vote_average).ThenByDescending(y => y.width).FirstOrDefault().file_path ?? string.Empty;
-              if (!string.IsNullOrEmpty(image))
-              {
-                self.Fanart = ApiImageTheMovieDB + image;
-              }
             }
 
             // Cache
             if (!Utils.ImageCache.Contains(key))
             {
-              Utils.TVIDCache.Add(key, json);
+              Utils.ImageCache.Add(key, json);
             }
           }
           catch
@@ -146,6 +141,7 @@ namespace MQTTPlugin
         {
           self.Poster = Utils.ImageToDataImage(self.Poster, 133, 200);
         }
+
         // Background
         if (!self.Fanart.StartsWith("http"))
         {
