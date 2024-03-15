@@ -119,6 +119,15 @@ jobs:
           retention-days: ${{ inputs.retention-build || 90 }}
           if-no-files-found: error
 
+  cache-clear:
+    name: Clear cache
+    runs-on: ubuntu-latests
+    needs:
+      - mpe
+    steps:
+      - name: Clear cache
+        uses: easimon/wipe-cache@main
+
   ci-status:
     name: Status
     runs-on: ubuntu-latest
