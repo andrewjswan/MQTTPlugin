@@ -27,12 +27,6 @@ jobs:
         with:
           vs-version: 16.11
 
-      - name: Create cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}
-          key: plugin
-          
       - name: Git Checkout
         uses: actions/checkout@v4
         with:
@@ -59,6 +53,12 @@ jobs:
             ${{ github.workspace }}\MQTTPlugin\bin\Release\M2Mqtt.dll
           retention-days: ${{ inputs.retention-build || 90 }}
           if-no-files-found: error
+
+      - name: Save cache
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}
+          key: plugin
 
   codeql:
     name: CodeQL
