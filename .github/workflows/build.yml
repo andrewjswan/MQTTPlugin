@@ -16,6 +16,10 @@ on:
         default: 90
         required: false
         type: number
+    outputs:
+      version:
+        description: "MPE1 Version"
+        value: ${{ jobs.mpe.outputs.version }}
 
 jobs:
   build:
@@ -62,6 +66,7 @@ jobs:
 
   codeql:
     name: CodeQL
+    if: "contains(github.event.head_commit.message, '[release]')"
     uses: andrewjswan/MPE/.github/workflows/codeql.yml@master
     needs: 
       - build
@@ -74,6 +79,8 @@ jobs:
     runs-on: windows-2019
     needs:
       - build
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Restore cache
         uses: actions/cache/restore@v4
@@ -81,7 +88,7 @@ jobs:
           path: ${{ github.workspace }}
           key: plugin
 
-      - name: Git Checkout / MPE
+      - name: Git Checkout / MPE / XPath
         uses: actions/checkout@v4
         with:
           repository: andrewjswan/MPE
@@ -103,6 +110,13 @@ jobs:
         working-directory: ${{ github.workspace }}\builds
         shell: cmd
 
+      - name: Get MPE1 Version
+        id: version
+        run: |
+          FOR /F "tokens=*" %%i IN ('Tools\sigcheck.exe -accepteula -nobanner -n "..\MQTTPlugin\bin\Release\MQTTPlugin.dll"') DO (ECHO version=%%i >> %GITHUB_OUTPUT%)
+        working-directory: ${{ github.workspace }}\scripts
+        shell: cmd
+
       - name: Build MPE1
         run: |
           Create_Installer.bat
@@ -119,21 +133,121 @@ jobs:
           retention-days: ${{ inputs.retention-build || 90 }}
           if-no-files-found: error
 
-  cache-clear:
-    name: Clear cache
+      - name: Upload Artifact / MPE XML
+        uses: actions/upload-artifact@v4
+        if: ${{ success() && contains(github.event.head_commit.message, '[release]') }}
+        with:
+          name: MQTTPlugin XML
+          path: |
+            ${{ github.workspace }}\scripts\MQTTPlugin.xml
+          retention-days: ${{ inputs.retention-build || 90 }}
+          if-no-files-found: error
+
+      - name: Get Release Version Description
+        if: ${{ success() && contains(github.event.head_commit.message, '[release]') }}
+        run: |
+          call ..\MPE\XPath\xpath.cmd "MQTTPlugin.xml" "//Items/PackageClass/GeneralInfo/VersionDescription" last > description.txt
+        working-directory: ${{ github.workspace }}\scripts
+        shell: cmd
+
+      - name: Upload Artifact / Version Description
+        uses: actions/upload-artifact@v4
+        if: ${{ success() && contains(github.event.head_commit.message, '[release]') }}
+        with:
+          name: MQTTPlugin Version Description
+          path: |
+            ${{ github.workspace }}\scripts\description.txt
+          retention-days: ${{ inputs.retention-build || 90 }}
+          if-no-files-found: error
+
+  xml:
+    name: MQTT Plugin / XML
     runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, '[release]')"
     needs:
       - mpe
+    permissions:
+      contents: write
     steps:
-      - name: Clear cache
-        uses: easimon/wipe-cache@main
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: MQTTPlugin XML
+          path: ${{ github.workspace }}/scripts/
+
+      - name: Update / MPE1 XML
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'MQTT Plugin ${{needs.mpe.outputs.version}} / Release'
+          add: '${{ github.workspace }}/scripts/MQTTPlugin.xml'
+
+      - name: Delete XML Artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+            name: MQTTPlugin XML
+            failOnError: false
+
+  release:
+    name: MQTT Plugin / Release
+    if: "contains(github.event.head_commit.message, '[release]')"
+    needs:
+      - mpe
+      - xml
+    permissions:
+      contents: write
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: MQTTPlugin MPE1
+          path: release-files
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: MQTTPlugin Version Description
+          path: release-description
+
+      - name: Check Artifacts
+        run: |
+          ls -l
+        working-directory: release-files
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: MQTT Plugin v${{needs.mpe.outputs.version}}
+          tag_name: v${{needs.mpe.outputs.version}}
+          body_path: release-description/description.txt
+          generate_release_notes: true
+          files: |
+            release-files/*.mpe1
+
+      - name: Delete MPE1 Artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: MQTTPlugin MPE1
+          failOnError: false
+
+      - name: Delete Version Description Artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: MQTTPlugin Version Description
+          failOnError: false
 
   ci-status:
-    name: Status
+    name: Build Status
     runs-on: ubuntu-latest
     needs:
       - build
-      - codeql
       - mpe
     if: always()
     steps:
@@ -143,3 +257,27 @@ jobs:
       - name: Failure
         if: ${{ contains(needs.*.result, 'failure') }}
         run: exit 1
+
+  release-status:
+    name: Release Status
+    if: "contains(github.event.head_commit.message, '[release]')"
+    runs-on: ubuntu-latest
+    needs:
+      - release
+    steps:
+      - name: Success
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Failure
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
+  
+  cache-clear:
+    name: Clear cache
+    runs-on: ubuntu-latest
+    needs:
+      - mpe
+    if: always()
+    steps:
+      - name: Clear cache
+        uses: easimon/wipe-cache@main

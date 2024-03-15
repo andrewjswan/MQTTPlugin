@@ -254,7 +254,7 @@ ajs</Value>
     <Author>ajs</Author>
     <HomePage>https://github.com/andrewjswan/MQTTPlugin</HomePage>
     <ForumPage>https://forum.team-mediaportal.com/threads/mqtt-plugin.140314/</ForumPage>
-    <UpdateUrl>https://github.com/andrewjswan/MQTTPlugin/master/scripts/mqttplugin.xml</UpdateUrl>
+    <UpdateUrl>https://raw.githubusercontent.com/andrewjswan/MQTTPlugin/master/scripts/MQTTPlugin.xml</UpdateUrl>
     <Version>
       <Major>1</Major>
       <Minor>0</Minor>
@@ -264,10 +264,12 @@ ajs</Value>
     <ExtensionDescription> Publish some Mediaportal statuses to MQTTBroker</ExtensionDescription>
     <VersionDescription>Rebuild to support x86 and x64 architectures.
 Support for Newtonsoft.Json.13.0.3
-Fix for MP 1.33 x64</VersionDescription>
+Fix for MP 1.33 x64
+
+*** We Stand with Ukraine ***</VersionDescription>
     <DevelopmentStatus>Stable</DevelopmentStatus>
-    <OnlineLocation>https://raw.githubusercontent.com/andrewjswan/MQTTPlugin/master/builds/MQTTPlugin-{VERSION}.MPE1</OnlineLocation>
-    <ReleaseDate>2024-03-02T15:04:24</ReleaseDate>
+    <OnlineLocation>https://github.com/andrewjswan/MQTTPlugin/releases/download/v{VERSION}/MQTTPlugin-{VERSION}.MPE1</OnlineLocation>
+    <ReleaseDate>2024-03-19T15:04:24</ReleaseDate>
     <Tags>mqtt</Tags>
     <PlatformCompatibility>AnyCPU</PlatformCompatibility>
     <Location>..\builds\MQTTPlugin-MAJOR.MINOR.BUILD.REVISION.MPE1</Location>
@@ -344,8 +346,8 @@ Fix for MP 1.33 x64</VersionDescription>
   </UniqueFileList>
   <ProjectSettings>
     <FolderGroups />
-    <ProjectFilename>mqttplugin.xmp2</ProjectFilename>
-    <UpdatePath1>MQTTPlugin-{VERSION}.xml</UpdatePath1>
+    <ProjectFilename>MQTTPlugin.xmp2</ProjectFilename>
+    <UpdatePath1>MQTTPlugin.xml</UpdatePath1>
     <UpdatePath2 />
     <UpdatePath3 />
   </ProjectSettings>

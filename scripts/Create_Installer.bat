@@ -18,8 +18,8 @@ FOR /F "tokens=*" %%i IN ('Tools\sigcheck.exe /accepteula /nobanner /n "..\MQTTP
 :: Temp xmp2 file
 copy /Y MQTTPlugin.xmp2 MQTTPluginTemp.xmp2
 
-:: Sed "MQTTPlugin-{VERSION}.xml" from xmp2 file
-Tools\sed.exe -i "s/MQTTPlugin-{VERSION}.xml/MQTTPlugin-%version%.xml/g" MQTTPluginTemp.xmp2
+:: Sed "{VERSION}" from xmp2 file
+Tools\sed.exe -i "s/{VERSION}/%version%/g" MQTTPluginTemp.xmp2
 
 :: Build MPE1
 "%PROGS%\Team MediaPortal\MediaPortal\MPEMaker.exe" MQTTPluginTemp.xmp2 /B /V=%version% /UpdateXML

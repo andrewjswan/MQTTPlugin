@@ -12,7 +12,7 @@ using MediaPortal.Common.Utils;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ajs")]
 [assembly: AssemblyProduct("MQTTPlugin.Properties")]
-[assembly: AssemblyCopyright("Copyright © 2020-2021")]
+[assembly: AssemblyCopyright("Copyright © 2020-2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: CompatibleVersion("1.1.6.27644")]
