@@ -27,9 +27,6 @@ Tools\sed.exe -i "s/{VERSION}/%version%/g" MQTTPluginTemp.xmp2
 :: Cleanup
 del MQTTPluginTemp.xmp2
 
-:: Sed "MQTTPlugin-{VERSION}.mpe1" from MQTTPlugin.xml
-Tools\sed.exe -i "s/MQTTPlugin-{VERSION}.MPE1/MQTTPlugin-%version%.mpe1/g" MQTTPlugin-%version%.xml
-
 :: Parse version (Might be needed in the futute)
 FOR /F "tokens=1-4 delims=." %%i IN ("%version%") DO ( 
     SET major=%%i
