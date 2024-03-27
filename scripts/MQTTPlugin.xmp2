@@ -268,11 +268,11 @@ Fix for MP 1.33 x64
 
 *** We Stand with Ukraine ***</VersionDescription>
     <DevelopmentStatus>Stable</DevelopmentStatus>
-    <OnlineLocation>https://github.com/andrewjswan/MQTTPlugin/releases/download/v{VERSION}/MQTTPlugin-{VERSION}.MPE1</OnlineLocation>
+    <OnlineLocation>https://github.com/andrewjswan/MQTTPlugin/releases/download/v[Version]/MQTTPlugin-[Version].mpe1</OnlineLocation>
     <ReleaseDate>2024-03-19T15:04:24</ReleaseDate>
     <Tags>mqtt</Tags>
     <PlatformCompatibility>AnyCPU</PlatformCompatibility>
-    <Location>..\builds\MQTTPlugin-MAJOR.MINOR.BUILD.REVISION.MPE1</Location>
+    <Location>..\builds\MQTTPlugin-[Version].mpe1</Location>
     <Params>
       <Items>
         <SectionParam Name="Icon">
