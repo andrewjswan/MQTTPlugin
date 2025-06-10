@@ -5,22 +5,26 @@ cd ..
 
 setlocal enabledelayedexpansion
 
-if "%programfiles(x86)%XXX"=="XXX" goto 32BIT
-	:: 64-bit
-	set PROGS=%programfiles(x86)%
-	goto CONT
-:32BIT
-	set PROGS=%ProgramFiles%
-:CONT
-IF NOT EXIST "%PROGS%\Team MediaPortal\MediaPortal\" SET PROGS=C:
-
-: Prepare version
+:: Prepare version
 for /f "tokens=*" %%a in ('git rev-list HEAD --count') do set REVISION=%%a 
 set REVISION=%REVISION: =%
 "scripts\Tools\sed.exe" -i "s/\$WCREV\$/%REVISION%/g" MQTTPlugin\Properties\AssemblyInfo.cs
 	
 :: Build
-"%WINDIR%\Microsoft.NET\Framework\v4.0.30319\MSBUILD.exe" /target:Rebuild /property:Configuration=RELEASE /fl /flp:logfile=MQTTPlugin.log;verbosity=diagnostic MQTTPlugin.sln
+FOR %%p IN ("%PROGRAMFILES(x86)%" "%PROGRAMFILES%") DO (
+  FOR %%s IN (2019 2022) DO (
+    FOR %%e IN (Community Professional Enterprise BuildTools) DO (
+      SET PF=%%p
+      SET PF=!PF:"=!
+      SET MSBUILD_PATH="!PF!\Microsoft Visual Studio\%%s\%%e\MSBuild\Current\Bin\MSBuild.exe"
+      IF EXIST "!MSBUILD_PATH!" GOTO :BUILD
+    )
+  )
+)
+
+:BUILD
+
+%MSBUILD_PATH% /target:Rebuild /property:Configuration=RELEASE /fl /flp:logfile=MQTTPlugin.log;verbosity=diagnostic MQTTPlugin.sln
 
 : Revert version
 git checkout MQTTPlugin\Properties\AssemblyInfo.cs
