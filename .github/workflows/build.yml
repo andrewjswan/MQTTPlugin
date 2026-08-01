@@ -49,7 +49,7 @@ jobs:
           name: MQTTPlugin
           path: |
             ${{ github.workspace }}\MQTTPlugin\bin\Release\MQTTPlugin.dll
-            ${{ github.workspace }}\MQTTPlugin\bin\Release\M2Mqtt.dll
+            ${{ github.workspace }}\MQTTPlugin\bin\Release\M2Mqtt.Net.dll
           retention-days: ${{ inputs.retention-build || 90 }}
           if-no-files-found: error
 

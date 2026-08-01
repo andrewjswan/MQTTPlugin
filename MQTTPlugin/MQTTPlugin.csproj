@@ -81,12 +81,12 @@
     <Reference Include="GUIVideos">
       <HintPath>..\External\GUIVideos.dll</HintPath>
     </Reference>
-    <Reference Include="LatestMediaHandler, Version=2.4.0.79, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="LatestMediaHandler">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\External\LatestMediaHandler.dll</HintPath>
     </Reference>
-    <Reference Include="M2Mqtt, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\M2Mqtt.4.1\lib\net40\M2Mqtt.dll</HintPath>
+    <Reference Include="M2Mqtt.Net, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\M2Mqtt.4.3.0.0\lib\net45\M2Mqtt.Net.dll</HintPath>
     </Reference>
     <Reference Include="MovingPictures">
       <HintPath>..\External\MovingPictures.dll</HintPath>
@@ -94,7 +94,7 @@
     <Reference Include="MP-TVSeries">
       <HintPath>..\External\MP-TVSeries.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+    <Reference Include="Newtonsoft.Json">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\External\Newtonsoft.Json.dll</HintPath>
     </Reference>

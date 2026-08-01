@@ -193,7 +193,7 @@ namespace MQTTPlugin
       Logger.Info("Starting " + PLUGIN_NAME + " version " + Assembly.GetExecutingAssembly().GetName().Version);
 
       var port = Convert.ToInt32(Port);
-      mqttClient = new MqttClient(Host, port, false, null);
+      mqttClient = new MqttClient(Host, port, false, null, null, MqttSslProtocols.None);
       mqttClient.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;
       mqttClient.MqttMsgPublished += Client_MqttMsgPublished;
 

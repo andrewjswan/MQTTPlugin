@@ -13,7 +13,7 @@ namespace MQTTPlugin
     public static List<string> LatestsMedia()
     {
       List<string> _latests = new List<string>();
-      if (Utils.IsAssemblyAvailable("LatestMediaHandler", new Version(2, 4, 0, 0)))
+      if (Utils.IsAssemblyAvailable("LatestMediaHandler", new Version(2, 5, 0, 0)))
       {
         if (MQTTPlugin.DebugMode) Logger.Debug("LatestMediaHandler found, searching for Latests media");
         try
