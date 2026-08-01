@@ -13,9 +13,9 @@
             <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
               <Param1 />
               <UpdateOption>OverwriteIfOlder</UpdateOption>
-              <LocalFileName>..\MQTTPlugin\bin\Release\M2Mqtt.dll</LocalFileName>
-              <ZipFileName>Installer{CopyFile}\{41ce8ff3-347b-4eb8-965d-ba2cf2ca6187}-M2Mqtt.dll</ZipFileName>
-              <DestinationFilename>%Plugins%\process\M2Mqtt.dll</DestinationFilename>
+              <LocalFileName>..\MQTTPlugin\bin\Release\M2Mqtt.Net.dll</LocalFileName>
+              <ZipFileName>Installer{CopyFile}\{41ce8ff3-347b-4eb8-965d-ba2cf2ca6187}-M2Mqtt.Net.dll</ZipFileName>
+              <DestinationFilename>%Plugins%\process\M2Mqtt.Net.dll</DestinationFilename>
             </FileItem>
             <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
               <Param1 />
@@ -262,14 +262,13 @@ ajs</Value>
       <Revision>0</Revision>
     </Version>
     <ExtensionDescription> Publish some Mediaportal statuses to MQTTBroker</ExtensionDescription>
-    <VersionDescription>Rebuild to support x86 and x64 architectures.
-Support for Newtonsoft.Json.13.0.3
-Fix for MP 1.33 x64
+    <VersionDescription>Bump M2Mqtt to 4.3.0.0
+Rebuild to support x86 and x64 architectures.
 
 *** We Stand with Ukraine ***</VersionDescription>
     <DevelopmentStatus>Stable</DevelopmentStatus>
     <OnlineLocation>https://github.com/andrewjswan/MQTTPlugin/releases/download/v[Version]/MQTTPlugin-[Version].mpe1</OnlineLocation>
-    <ReleaseDate>2024-03-19T15:04:24</ReleaseDate>
+    <ReleaseDate>2026-08-01T13:13:13</ReleaseDate>
     <Tags>mqtt</Tags>
     <PlatformCompatibility>AnyCPU</PlatformCompatibility>
     <Location>..\builds\MQTTPlugin-[Version].mpe1</Location>
@@ -310,9 +309,9 @@ Fix for MP 1.33 x64
       <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
         <Param1 />
         <UpdateOption>OverwriteIfOlder</UpdateOption>
-        <LocalFileName>..\MQTTPlugin\bin\Release\M2Mqtt.dll</LocalFileName>
-        <ZipFileName>Installer{CopyFile}\{41ce8ff3-347b-4eb8-965d-ba2cf2ca6187}-M2Mqtt.dll</ZipFileName>
-        <DestinationFilename>%Plugins%\process\M2Mqtt.dll</DestinationFilename>
+        <LocalFileName>..\MQTTPlugin\bin\Release\M2Mqtt.Net.dll</LocalFileName>
+        <ZipFileName>Installer{CopyFile}\{41ce8ff3-347b-4eb8-965d-ba2cf2ca6187}-M2Mqtt.Net.dll</ZipFileName>
+        <DestinationFilename>%Plugins%\process\M2Mqtt.Net.dll</DestinationFilename>
       </FileItem>
       <FileItem InstallType="CopyFile" SystemFile="false" Modified="true" Condition="None">
         <Param1 />
